@@ -1,14 +1,19 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+# vim:fileencoding=utf-8
 import sqlite3
 import requests
-
-
+import importlib
+import sys
+importlib.reload(sys)
 users_names = ['ZOG666', 'Himi_Jendrix']
 
-columns = ['MW', 'MW_Ветеран', 'Комплект_Воина', 'Арабский',
-           'Русский', 'Quarantine', 'COVID_Ветеран', 'Комплект_Карантин']
+columns = ['MW', 'MW_Veteran', 'Complect_Voina', 'Arab',
+           'Russ', 'Quarantine', 'COVID_Veteran', 'Complect_Quarantine']
 
-list_chevrons = ['MW', 'MW_Ветеран', 'Арабский',
-                 'Русский', 'Quarantine', 'COVID_Ветеран']
+list_chevrons = ['MW', 'MW_Veteran', 'Arab',
+                 'Russ', 'Quarantine', 'COVID_Veteran']
+
 
 exchange_api = 'https://api.privatbank.ua/p24api/pubinfo?json&exchange&coursid=5'
 default_price = (200, 300, 450, 250, 150, 250, 250, 450)
@@ -18,11 +23,15 @@ complect_quarantine = [columns[5], columns[6]]
 
 
 def get_actual_exchange():
+    print("-------")
+    print('Trying to get actual exchange from PrivatBank')
     r = requests.get(exchange_api)
     response = r.json()
-    actual_exchange = response[2]['sale']
-
-    return float(actual_exchange)
+    resp = response[2]
+    actual_exchange_sale = resp['sale']
+    actual_exchange_buy = resp['buy']
+    print(f'Response with exchange: {resp}\nExchange: {actual_exchange_sale}')
+    return float(actual_exchange_sale), float(actual_exchange_buy)
 
 
 def get_connection():
@@ -43,13 +52,13 @@ def init_sold_chevrons_table(force=False):
 
     create_table = 'CREATE TABLE sold_chevrons (' \
                    'MW     INTEGER,' \
-                   'MW_Ветеран INTEGER,'\
-                   'Комплект_Воина INTEGER,'\
-                   'Арабский INTEGER,'\
-                   'Русский INTEGER,'\
+                   'MW_Veteran INTEGER,'\
+                   'Complect_Voina INTEGER,'\
+                   'Arab INTEGER,'\
+                   'Russ INTEGER,'\
                    'Quarantine INTEGER,'\
-                   'COVID_Ветеран INTEGER,'\
-                   'Комплект_Карантин INTEGER)'
+                   'COVID_Veteran INTEGER,'\
+                   'Complect_Quarantine INTEGER)'
     print('Trying to create sold_chevrons table..')
     c.execute(create_table)
     print('Done! Table was created.')
@@ -70,11 +79,11 @@ def init_all_chevrons_table(force=False):
 
     create_table = 'CREATE TABLE all_chevrons (' \
                    'MW     INTEGER,' \
-                   'MW_Ветеран INTEGER,'\
-                   'Арабский INTEGER,'\
-                   'Русский INTEGER,'\
+                   'MW_Veteran INTEGER,'\
+                   'Arab INTEGER,'\
+                   'Russ INTEGER,'\
                    'Quarantine INTEGER,'\
-                   'COVID_Ветеран INTEGER)'
+                   'COVID_Veteran INTEGER)'
     print('Trying to create all_chevrons table..')
     c.execute(create_table)
     print('Done! Table was created.')
@@ -95,13 +104,13 @@ def init_price_chevrons_table_and_set_default_price(force=False):
 
     create_table = 'CREATE TABLE price_chevrons (' \
                    'MW     INTEGER,' \
-                   'MW_Ветеран INTEGER,'\
-                   'Комплект_Воина INTEGER,'\
-                   'Арабский INTEGER,'\
-                   'Русский INTEGER,'\
+                   'MW_Veteran INTEGER,'\
+                   'Complect_Voina INTEGER,'\
+                   'Arab INTEGER,'\
+                   'Russ INTEGER,'\
                    'Quarantine INTEGER,'\
-                   'COVID_Ветеран INTEGER,'\
-                   'Комплект_Карантин INTEGER)'
+                   'COVID_Veteran INTEGER,'\
+                   'Complect_Quarantine INTEGER)'
     print('Trying to create price_chevrons table..')
     c.execute(create_table)
     print('Done! Table was created.')
@@ -299,7 +308,7 @@ def add_sold_complect_value(complect_name=None):
     results = c.execute(get_value).fetchall()
     new_sold = results[0][0]
 
-    if complect_name == 'Комплект_Воина':
+    if complect_name == 'Complect_Voina':
         complect = complect_voin
     else:
         complect = complect_quarantine
@@ -338,7 +347,7 @@ def correct_sold_complect_value(complect_name=None):
     results = c.execute(get_value).fetchall()
     new_sold = results[0][0]
 
-    if complect_name == 'Комплект_Воина':
+    if complect_name == 'Complect_Voina':
         complect = complect_voin
     else:
         complect = complect_quarantine
@@ -480,3 +489,5 @@ def main_report():
     }
 
     return details, all_money_rub, all_count
+
+
